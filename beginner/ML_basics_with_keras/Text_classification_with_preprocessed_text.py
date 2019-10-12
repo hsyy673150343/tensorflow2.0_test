@@ -1,6 +1,8 @@
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 '''下载 IMDB 数据集'''
 imdb = keras.datasets.imdb
@@ -78,3 +80,87 @@ model.add(keras.layers.Dense(16, activation='relu'))
 model.add(keras.layers.Dense(1, activation='sigmoid'))
 
 model.summary()
+
+model.compile(optimizer='adam',
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
+
+# 创建一个验证集
+'''
+在训练时，我们想要检查模型在未见过的数据上的准确率（accuracy）。通过从原始训练数据中分离 10,000 个样本来创建一个验证集。
+（为什么现在不使用测试集？我们的目标是只使用训练数据来开发和调整模型，然后只使用一次测试数据来评估准确率（accuracy））。
+'''
+x_val = train_data[:10000]
+partial_x_train = train_data[10000:]
+
+y_val = train_labels[:10000]
+partial_y_train = train_labels[10000:]
+
+
+'''
+训练模型
+ 
+在训练过程中，监测来自验证集的 10,000 个样本上的损失值（loss）和准确率（accuracy）
+'''
+history = model.fit(partial_x_train,
+                    partial_y_train,
+                    epochs=40,# 通过在 20 个左右的 epoch 后停止训练来避免过拟合
+                    batch_size=512,
+                    validation_data=(x_val, y_val),
+                    verbose=1)
+
+
+'''评估模型 在测试集上评估模型'''
+results = model.evaluate(test_data,  test_labels, verbose=2)
+
+print(results)
+
+
+'''
+创建一个准确率（accuracy）和损失值（loss）随时间变化的图表
+model.fit() 返回一个 History 对象，该对象包含一个字典，其中包含训练阶段所发生的一切事件：
+'''
+
+history_dict = history.history
+print(history_dict.keys())
+
+
+
+acc = history_dict['accuracy']
+val_acc = history_dict['val_accuracy']
+loss = history_dict['loss']
+val_loss = history_dict['val_loss']
+
+epochs = range(1, len(acc) + 1)
+
+# “bo”代表 "蓝点"
+plt.plot(epochs, loss, 'bo', label='Training loss')
+# b代表“蓝色实线”
+plt.plot(epochs, val_loss, 'b', label='Validation loss')
+plt.title('Training and validation loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.show()
+
+plt.clf()   # 清除数字
+
+plt.plot(epochs, acc, 'bo', label='Training acc')
+plt.plot(epochs, val_acc, 'b', label='Validation acc')
+plt.title('Training and validation accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.show()
+
+
+'''
+过拟合：
+    模型在训练数据上的表现比在以前从未见过的数据上的表现要更好。
+    在此之后，模型过度优化并学习特定于训练数据的表示，而不能够泛化到测试数据。
+    
+    通过在 20 个左右的 epoch 后停止训练来避免过拟合
+'''
+
