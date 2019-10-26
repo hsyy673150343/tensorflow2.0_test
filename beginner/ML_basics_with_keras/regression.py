@@ -70,7 +70,7 @@ normed_test_data = norm(test_dataset)
 '''构建模型'''
 def build_model():
   model = keras.Sequential([
-    layers.Dense(64, activation='relu', input_shape=[len(train_dataset.keys())]),
+    layers.Dense(64, tf.keras.activations.relu, input_shape=[len(train_dataset.keys())]),
     layers.Dense(64, activation='relu'),
     layers.Dense(1)
   ])
